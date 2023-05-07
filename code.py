@@ -30,12 +30,17 @@ TODO: Can I use the mp mqtt async library with cp?
         No, it needs porting. Consider porting?
 TODO: Custom time sync protocol with espnow clients...
 """
+import time
+now = time.monotonic()
+
 # Standard imports
 # pylint: disable=no-name-in-module, import-error
 import asyncio
 import traceback
 import wifi
 from supervisor import reload
+print(f"Time standard imports: {time.monotonic() - now}")
+now = time.monotonic()
 
 # Third party imports
 import adafruit_logging as logging
@@ -43,10 +48,14 @@ import adafruit_minimqtt.adafruit_minimqtt as MQTT
 import cp_libs.time
 from cp_libs.async_primitives.queue import AsyncQueue
 from cp_libs.network import Network
+print(f"Time third party imports: {time.monotonic() - now}")
+now = time.monotonic()
 
 # Local imports
 import peripherals
 from config import config
+print(f"Time local imports: {time.monotonic() - now}")
+now = time.monotonic()
 
 # Constants
 
@@ -163,6 +172,9 @@ async def time_sync(net: Network, sync_interval_secs: float) -> None:
 
 async def main() -> None:
     """Main Loop - Runs all async tasks."""
+    global now
+    print(f"Time main start: {time.monotonic() - now}")
+    now = time.monotonic()
 
     mqtt_network = Network.create_mqtt("BPI",
                                        on_connect_cb=mqtt_connected,
@@ -187,6 +199,7 @@ async def main() -> None:
         mqtt_send_task = asyncio.create_task(mqtt_send(mqtt_network))
         time_sync_task = asyncio.create_task(time_sync(mqtt_network, config["time_sync_rate_sec"]))
 
+        print(f"Time main async tasks start: {time.monotonic() - now}")
         await asyncio.gather(min_iot_task, mqtt_loop_task, mqtt_send_task, time_sync_task)
     except Exception as exc:
         logger.critical("Caught unexpected exception:")
